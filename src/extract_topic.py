@@ -18,6 +18,7 @@ def generate_text_list(text_dir):
 
 
 class LemmaCountVectorizer(CountVectorizer):
+"""a count vectorizer with lemmatizer build in"""
     def build_analyzer(self):
         lemm = WordNetLemmatizer()
         analyzer = super(LemmaCountVectorizer, self).build_analyzer()
