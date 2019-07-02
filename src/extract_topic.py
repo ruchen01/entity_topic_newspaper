@@ -11,6 +11,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 def bert_tokens(text_all, token_choice='bert-base-uncased'):
+    """Use Bert tokenizier to tokenize the issued level text"""
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     text_article_tokenized = []
     text_flat_tokenized = []
@@ -28,6 +29,7 @@ def bert_tokens(text_all, token_choice='bert-base-uncased'):
 
 
 def get_topic_embedding(topics, port=6000, port_out=6001, model_path='/home/ubuntu/bert_tests/bert-as-service/uncased_L-12_H-768_A-12'):
+    """Use bert-as-service to encode the topics into embeddings vec"""
     common = [
         '-model_dir', model_path,
         '-num_worker', '2',
@@ -64,14 +66,14 @@ def tfidf_vec(text_flat_tokenized, stopwords):
         preprocessor=dummy_doc,
         token_pattern=None)  
     X = vectorizer.fit_transform(text_flat_tokenized)
-    feature_names=vectorizer.get_feature_names()
-    tfidf_biglist=[]
+    feature_names = vectorizer.get_feature_names()
+    tfidf_biglist = []
     for issue_num in range(len(text_flat_tokenized)):
-        feature_index =X[issue_num,:].nonzero()[1]
+        feature_index = X[issue_num,:].nonzero()[1]
         tfidf_scores = zip(feature_index, [X[issue_num, x] for x in feature_index])
-        tfidf_dict={}
+        tfidf_dict = {}
         for w, s in [(feature_names[i], s) for (i, s) in tfidf_scores]:
-            tfidf_dict[w]=s
+            tfidf_dict[w] = s
         tfidf_biglist.append(tfidf_dict)
     return tfidf_biglist
 
@@ -106,7 +108,7 @@ def get_word_embedding(text_one_issue, port=5000, port_out=5001, model_path='/ho
     vec = bc.encode(text_one_issue,show_tokens=True,is_tokenized=False)
     bc.close()
     server.close()
-    word_vec= vec[0]
+    word_vec = vec[0]
     #tokens= vec[1]
     np.save('./out/newspaper_embedding',word_vec)
     return vec
@@ -114,6 +116,7 @@ def get_word_embedding(text_one_issue, port=5000, port_out=5001, model_path='/ho
 
 def get_topics_one_issue(vec,topic_embedding,topics, divide_list_issue,tfidf_biglist,
                          issue_num):
+    """Compare the cosine similarity between articles per issue to topic embeddings"""
     bert_vecs = vec[0]
     bert_tokens = vec[1]
     tmp_sum = np.zeros((vec[0].shape[0], vec[0].shape[2]))
@@ -172,9 +175,9 @@ def issue2articles(data):
 
 def articles2sentences(articles_list):
     """Break each article into sentences for each issue. issue_sentence is a flat list 
-    of sentences and issue_article_sentence is sub sub list. """
+    of sentences and issue_article_sentence is nested list. """
     issue_sentence = []
-    issue_article_sentence=[]
+    issue_article_sentence = []
     for article in articles_list:
         tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
         sentences = tokenizer.tokenize(article)
@@ -201,12 +204,12 @@ def combine_issues(issues_path):
     """combine all issues, return text_all[i][j]= a sentence, 
     where i is issue_num and j is sentence index"""
     text_all = []
-    divide_list=[]
+    divide_list = []
     i = 0  
     issue_files = glob.glob(issues_path+'*.txt')
     i_max = len(issue_files)
     for issue_file in issue_files:
-        if i<i_max:
+        if i < i_max:
             with open(issue_file) as f:
                 data = f.readlines()
             articles_list = issue2articles(data)
@@ -214,7 +217,7 @@ def combine_issues(issues_path):
             divide_list_each = find_divide_articlue_line_number(issue_article_sentence)
             divide_list.append(divide_list_each)
             text_all.append(issue_sentence)
-            i+=1
+            i += 1
         else:
             break
     return text_all
