@@ -1,6 +1,4 @@
 import numpy as np
-import glob
-import re
 import nltk
 from pytorch_pretrained_bert import BertTokenizer
 import time
@@ -8,6 +6,7 @@ from bert_serving.client import BertClient
 from bert_serving.server import BertServer
 from bert_serving.server.helper import get_args_parser
 from sklearn.feature_extraction.text import TfidfVectorizer
+import pandas as pd
 
 
 def bert_tokens(text_all, token_choice='bert-base-uncased'):
@@ -28,6 +27,19 @@ def bert_tokens(text_all, token_choice='bert-base-uncased'):
     return text_flat_tokenized, text_article_tokenized
 
 
+def get_topic_list(topic_file):
+    """Return topic list from topic csv file
+    csv file: first column is subject, second column is URL
+    """
+    df = pd.read_csv(topic_file,header = 0)
+    df = df.dropna()
+    col_names = df.columns
+    topics = df[col_names[0]].tolist()
+    topics = [topic.replace('--', ' ').replace('Antislavery', 'Anti-slavery').replace('antislavery', 'anti-slavery') for topic in topics]
+    
+    return topics
+
+
 def get_topic_embedding(topics, port=6000, port_out=6001, model_path='/home/ubuntu/bert_tests/bert-as-service/uncased_L-12_H-768_A-12'):
     """Use bert-as-service to encode the topics into embeddings vec"""
     common = [
@@ -39,7 +51,8 @@ def get_topic_embedding(topics, port=6000, port_out=6001, model_path='/home/ubun
         '-max_batch_size', '256',
         '-pooling_layer', '-2',
         '-cpu',
-    ]
+        #'-show_tokens_to_client',
+              ]
     args = get_args_parser().parse_args(common)
     server = BertServer(args)
     server.start()
@@ -47,21 +60,23 @@ def get_topic_embedding(topics, port=6000, port_out=6001, model_path='/home/ubun
     time.sleep(20)
     print('encoding...')
     bc = BertClient(port=port, port_out=port_out, show_server_config=False)
+    #vec = bc.encode(topics, show_tokens=True)
     vec = bc.encode(topics)
+    #print(vec[1])
     bc.close()
     server.close()
-    np.save('./out/topic_embedding',vec)
+    np.save('./output/topic_embedding',vec)
     return vec
 
 
-def tfidf_vec(text_flat_tokenized, stopwords):
+def tfidf_vec(text_flat_tokenized, stop_word):
     """returns tfidf weight for each word in each issue"""    
     def dummy_doc(doc):
         return doc
 
     vectorizer = TfidfVectorizer(
         analyzer='word',
-        stop_words=stopwords,
+        stop_words=stop_word,
         tokenizer=dummy_doc,
         preprocessor=dummy_doc,
         token_pattern=None)  
@@ -79,6 +94,7 @@ def tfidf_vec(text_flat_tokenized, stopwords):
 
 
 def cosine_similarity(word_emb_a, word_emb_b):
+    """Cosine similarity between two embeddings"""
     cos_sim = np.dot(word_emb_a, word_emb_b)/np.linalg.norm(word_emb_a)/np.linalg.norm(word_emb_b)
     return cos_sim
 
@@ -96,7 +112,7 @@ def get_word_embedding(text_one_issue, port=5000, port_out=5001, model_path='/ho
         '-pooling_strategy', 'NONE',
         '-pooling_layer', '-2',
         '-cpu',
-        'show_tokens_to_client',
+        '-show_tokens_to_client',
     ]
     args = get_args_parser().parse_args(common)
     server = BertServer(args)
@@ -110,12 +126,24 @@ def get_word_embedding(text_one_issue, port=5000, port_out=5001, model_path='/ho
     server.close()
     word_vec = vec[0]
     #tokens= vec[1]
-    np.save('./out/newspaper_embedding',word_vec)
+    np.save('../output/newspaper_embedding',word_vec)
+    return vec
+
+
+def get_word_embedding_server_on(text_one_issue, port=5000, port_out=5001):
+    """With BertServer turned on, returns word embedding for each issue,
+    not for all issues since vec will be too big.""" 
+    bc = BertClient(port=port, port_out=port_out, show_server_config=False)
+    vec = bc.encode(text_one_issue,show_tokens=True,is_tokenized=False)
+    bc.close()
+    #word_vec = vec[0]
+    #tokens= vec[1]
+    #np.save('../output/newspaper_embedding',word_vec)
     return vec
 
 
 def get_topics_one_issue(vec,topic_embedding,topics, divide_list_issue,tfidf_biglist,
-                         issue_num):
+                         issue_num, n_topics):
     """Compare the cosine similarity between articles per issue to topic embeddings"""
     bert_vecs = vec[0]
     bert_tokens = vec[1]
@@ -126,101 +154,30 @@ def get_topics_one_issue(vec,topic_embedding,topics, divide_list_issue,tfidf_big
                 weight = tfidf_biglist[issue_num][tok]
                 tmp_sum[num, :] += bert_vecs[num, word_idx]*weight
     topics_issue = set()
-    for i in range (divide_list_issue-1):
+    topics_issue_list = []
+    for i in range (len(divide_list_issue)-1):
         for j in range(len(topics)):
             if i == 0:
                 article_vec = np.sum(tmp_sum[0:divide_list_issue[i]],axis =0)
                 sim = cosine_similarity(article_vec, topic_embedding[j,:])
                 if sim > 0.7:
-                    topics_issue.add(topics[j])
+                    #topics_issue.add(topics[j])
+                    topics_issue_list.append([topics[j], sim])
             else:
                 article_vec = np.sum(tmp_sum[divide_list_issue[i]:divide_list_issue[i+1]],axis =0)
                 sim = cosine_similarity(article_vec, topic_embedding[j,:])
                 if sim > 0.7:
-                    topics_issue.add(topics[j])
-    return topics_issue
-
-
-def issue2articles(data):
-    """Break each issue into articles based on the style of titles"""
-    divide_li = []
-    for i, line in enumerate(data):
-        if i<len(data):
-            tok = nltk.word_tokenize(line)
-            tok_cap = []
-            for word in tok:
-                if len(word)==1:
-                    cap_word = re.findall('([A-Z])', word)
-                else:
-                    cap_word = re.findall('([A-Z]+(?:(?!\s?[A-Z][a-z])\s?[A-Z])+)', word)
-                if cap_word != []:
-                    tok_cap.append(cap_word[0]) 
-            if tok_cap != [] and len(tok)-len(tok_cap)<=1 and len(tok)>2:
-                divide_li.append(i)
-    articles = []
-    for i,ind in enumerate(divide_li):
-        if i+1<= len(divide_li)-1:
-            if divide_li[i+1]-ind>5:
-                articles.append(data[ind:divide_li[i+1]])
-        else:
-            articles.append(data[ind:])
-    # The first article per issue is always the headline and therefore is dropped
-    articles.pop(0);
-    articles_list=[]
-    for article in articles:
-        data = " ".join(line.strip() for line in article) 
-        articles_list.append(data)
-    return articles_list
-
-
-def articles2sentences(articles_list):
-    """Break each article into sentences for each issue. issue_sentence is a flat list 
-    of sentences and issue_article_sentence is nested list. """
-    issue_sentence = []
-    issue_article_sentence = []
-    for article in articles_list:
-        tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-        sentences = tokenizer.tokenize(article)
-        article_sentence=[]
-        for sentence in sentences:
-            if len(sentence)>5:
-                issue_sentence.append(sentence)
-                article_sentence.append(sentence)
-        issue_article_sentence.append(article_sentence)
-    return issue_sentence, issue_article_sentence
-
-
-def find_divide_articlue_line_number(issue_article_sentence):
-    """Find the line number which divide each issue into articles """
-    divide_num = 0
-    divide_list = []
-    for idx, article in enumerate(issue_article_sentence):
-        divide_num += len(article)
-        divide_list.append(divide_num)
-    return divide_list
-
-
-def combine_issues(issues_path):
-    """combine all issues, return text_all[i][j]= a sentence, 
-    where i is issue_num and j is sentence index"""
-    text_all = []
-    divide_list = []
-    i = 0  
-    issue_files = glob.glob(issues_path+'*.txt')
-    i_max = len(issue_files)
-    for issue_file in issue_files:
-        if i < i_max:
-            with open(issue_file) as f:
-                data = f.readlines()
-            articles_list = issue2articles(data)
-            issue_sentence, issue_article_sentence=articles2sentences(articles_list)
-            divide_list_each = find_divide_articlue_line_number(issue_article_sentence)
-            divide_list.append(divide_list_each)
-            text_all.append(issue_sentence)
-            i += 1
-        else:
-            break
-    return text_all
+                    #topics_issue.add(topics[j])
+                    topics_issue_list.append([topics[j], sim])
+    sort_topic_sim = sorted(topics_issue_list, key=lambda x:x[1], reverse=True)
+    tmp = zip(*sort_topic_sim)
+    topics = list(tmp)[0]
+    if n_topics <= len(topics):
+        topics_issue = set(topics[:n_topics])
+    else:
+        topics_issue = set(topics)
+    topics_issue = list(topics_issue)
+    return topics_issue, sort_topic_sim
 
 
 def expand_stopwords():
@@ -232,5 +189,5 @@ def expand_stopwords():
     #add all ##letter
     for letter in symbol_list[97:123]:
         bert_stop.append('##'+letter)
-    stopwords=list(set(nltk_stopwords+symbol_list+my_stopwords+bert_stop))
-    return stopwords
+    stop_words=list(set(nltk_stopwords+symbol_list+my_stopwords+bert_stop))
+    return stop_words
