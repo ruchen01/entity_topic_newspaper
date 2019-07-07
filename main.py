@@ -1,15 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jul  5 13:37:23 2019
-
-@author: Ru
-"""
 from __future__ import print_function
 import argparse
-#import os
 import sys
-#from src.load import Newspapers
 from src.pipeline import test_pipeline
 from src.pipeline import major_pipeline
 
@@ -32,8 +23,12 @@ def parse_arguments(arguments = None):
                         help='', default = './model/glove.6B.100d.txt')
     parser.add_argument('--output_dir', type=str, dest='output_dir',
                         help='', default = './output')
-    parser.add_argument('--choice', type=int, dest='choice',
-                        help='', default = None)
+    parser.add_argument('--test', type=int, dest='test',
+                        help='', default = False)
+    parser.add_argument('--gpu', type=bool, dest='cpu',
+                        help='', default = False)
+    parser.add_argument('--s3', type=bool, dest='s3',
+                        help='', default=False)
     try:
         arguments = parser.parse_args(args=arguments)
     except:
@@ -52,20 +47,13 @@ def main(argv=sys.argv):
     name_file = arguments['entity_file']
     model_conll_dir = arguments['model_conll_dir']
     embedding_file = arguments['glove_file']
-    # choice of S3 or local directory, by default it's local
-    if arguments['choice'] == 0:
-        print('train')
+    if arguments['test'] == False:
+        print('Runing the pipeline from end-to-end! ')
         major_pipeline(img_dir, output_text_dir, model_bert_dir, topic_file, name_file, model_conll_dir, 
                        embedding_file)
-    elif arguments['choice'] == 1:
-        print('test')
+    else:
+        print('Run test.')
         test_pipeline(output_text_dir)
-    #file_name = '../13_01_000001.tif'
-    #newspapers = Newspapers()
-    #newspapers.open_img(file_name)
-    #text = newspapers.ocr_img_to_text()
-    #print(text)
-    #newspapers.test()
 
 if __name__ == "__main__":
     main()
