@@ -1,5 +1,5 @@
 # LibraryBot - Topic and Entity Extraction for Historic Newspapers
-![Preview](https://github.com/ruchen01/entity_topic_newspaper/assets/header.png)
+<img src="assets/header.png" >
 
 This repository contains a barebones implementation of a topic and name entity extraction engine.
 The implementation is based on leveraging pre-trained models from BERT combining with TFIDF for topic modeling and 
