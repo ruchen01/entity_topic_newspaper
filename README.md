@@ -1,5 +1,5 @@
 # LibraryBot - Topic and Entity Extraction for Historic Newspapers
-![Preview](https://github.com/ruchen01/entity_topic_newspaper/assets/header.png)
+<img src="assets/header.png" >
 
 This repository contains a barebones implementation of a topic and name entity extraction engine.
 The implementation is based on leveraging pre-trained models from BERT combining with TFIDF for topic modeling and 
@@ -67,3 +67,30 @@ data/
 |      |-------entity_list.csv
 ```
 Each class name should be one word in the english language, or multiple words separated by '_'.
+
+## Output structure
+The revelant output directory are topic, name and text, where topic folder contains the relevant topic list per issue and 
+name gives the important person's name list per issue. The text folder contains the OCR'd texts from images and can be reused for other purposes.
+
+```
+output/
+|
+|--- topic/
+|      |-------issue_1.txt
+|      |-------issue_2.txt
+|      ... 
+|
+|      |-------issue_n.txt
+|--- name/
+|      |-------issue_1.csv
+|      |-------issue_2.csv
+|      ...
+|      |-------issue_n.csv
+|----text/
+|      |-------issue_1.txt
+|      |-------issue_2.txt
+|      ...
+|
+|      |-------issue_n.txt
+|----ner/
+```
