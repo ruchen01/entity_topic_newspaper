@@ -1,4 +1,4 @@
-# Semantic Search
+# LibraryBot - Topic and Entity Extraction for Historic Newspapers
 ![Preview](https://github.com/ruchen01/entity_topic_newspaper/assets/header.png)
 
 This repository contains a barebones implementation of a topic and name entity extraction engine.
@@ -23,7 +23,6 @@ pip install -r requirements.txt
 Download a pre-trained BERT model, the example download provided below is BERT-Base, Uncased. 
 Download SpaCy English and GloVe vectors (vector size 300):
 ```
-mkdir model
 cd model
 curl -LO https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip
 unzip uncased_L-12_H-768_A-12.zip
