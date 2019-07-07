@@ -1,6 +1,4 @@
 import numpy as np
-import glob
-import re
 import nltk
 from pytorch_pretrained_bert import BertTokenizer
 import time
@@ -28,6 +26,7 @@ def bert_tokens(text_all, token_choice='bert-base-uncased'):
         text_article_tokenized.append(text_tokenized)
     return text_flat_tokenized, text_article_tokenized
 
+
 def get_topic_list(topic_file):
     """Return topic list from topic csv file
     csv file: first column is subject, second column is URL
@@ -39,6 +38,7 @@ def get_topic_list(topic_file):
     topics = [topic.replace('--', ' ').replace('Antislavery', 'Anti-slavery').replace('antislavery', 'anti-slavery') for topic in topics]
     
     return topics
+
 
 def get_topic_embedding(topics, port=6000, port_out=6001, model_path='/home/ubuntu/bert_tests/bert-as-service/uncased_L-12_H-768_A-12'):
     """Use bert-as-service to encode the topics into embeddings vec"""
@@ -52,8 +52,7 @@ def get_topic_embedding(topics, port=6000, port_out=6001, model_path='/home/ubun
         '-pooling_layer', '-2',
         '-cpu',
         #'-show_tokens_to_client',
-
-    ]
+              ]
     args = get_args_parser().parse_args(common)
     server = BertServer(args)
     server.start()
@@ -95,6 +94,7 @@ def tfidf_vec(text_flat_tokenized, stop_word):
 
 
 def cosine_similarity(word_emb_a, word_emb_b):
+    """Cosine similarity between two embeddings"""
     cos_sim = np.dot(word_emb_a, word_emb_b)/np.linalg.norm(word_emb_a)/np.linalg.norm(word_emb_b)
     return cos_sim
 
@@ -128,6 +128,7 @@ def get_word_embedding(text_one_issue, port=5000, port_out=5001, model_path='/ho
     #tokens= vec[1]
     np.save('../output/newspaper_embedding',word_vec)
     return vec
+
 
 def get_word_embedding_server_on(text_one_issue, port=5000, port_out=5001):
     """With BertServer turned on, returns word embedding for each issue,
@@ -177,17 +178,6 @@ def get_topics_one_issue(vec,topic_embedding,topics, divide_list_issue,tfidf_big
         topics_issue = set(topics)
     topics_issue = list(topics_issue)
     return topics_issue, sort_topic_sim
-
-
-
-
-
-
-
-
-
-
-
 
 
 def expand_stopwords():

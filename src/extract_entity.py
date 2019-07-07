@@ -1,4 +1,3 @@
-import spacy
 import en_core_web_sm
 import csv
 import pandas as pd
@@ -8,10 +7,12 @@ import os
 import shutil
 import glob
 from fuzzywuzzy import process
-from fuzzywuzzy import fuzz
 import fuzzyset
 
+
 def clean_process_name_file(name_file):
+    """ Process the name.csv into dataframe and do text cleaning and add
+    useful new columns: name, born year and death year """
     df = pd.read_csv(name_file,header = 0)
     df['name'] = df['name heading'].str.replace('\d+', '')
     df['name'] = df['name'].str.replace(', -', '')
@@ -36,6 +37,7 @@ def clean_process_name_file(name_file):
     return df
 
 def return_likely_year_match_df(match_df):
+    """ Apply born and death year constraint to get revelant persons """
     if len(match_df) > 1:
         #person most likely should be at least 10 years old in 1861
         ind1 = pd.to_numeric(match_df['begin'],errors='coerce') < 1851
@@ -51,7 +53,9 @@ def return_likely_year_match_df(match_df):
             match_df = match_df.iloc[0:1]
     return match_df
 
+
 def run_ner(issues_path, model_path, embedding_file):
+    """ Use pretrained LSTM model + Glove for NER """
     #spacy.load('en')
     text_folder = issues_path
     out_folder = './output'
@@ -69,8 +73,6 @@ def run_ner(issues_path, model_path, embedding_file):
         full_file_name = os.path.join(text_folder, file_name)
         if os.path.isfile(full_file_name):
             shutil.copy(full_file_name, predict_folder)
-    #model_path = '../model/conll_2003_en'
-    #embedding_file = '../model/glove.6B.100d.txt'
     nn = neuromodel.NeuroNER(train_model=False, use_pretrained_model=True, 
                              dataset_text_folder=ner_folder,
                              pretrained_model_folder=model_path,
@@ -78,7 +80,9 @@ def run_ner(issues_path, model_path, embedding_file):
                              output_folder=ner_folder + '/annotation')
     nn.fit()
     
+    
 def collect_ann_files():
+    """ Collect all the *.ann files"""
     output_ann_folder = './output/ner/annotation'
     dirs = os.listdir(output_ann_folder)
     #latest directory
@@ -93,31 +97,28 @@ def collect_ann_files():
     
 
 def get_name_list_per_issue(ann_file):
+    """ Remove depulicate names in the name lists per issue"""
     with open(ann_file) as f:
         data = f.read().splitlines()
-
     new_data = []
     for line in data:
         line = line.replace('\t',' ')
         new = line.split(' ')
         new_data.append(new)
-        
     results = [' '.join(t[4:]) for t in new_data if t[1] == 'PER']
     results_dedupe = list(process.dedupe(results, threshold=80))
-    #print(len(results_dedupe))
     return results_dedupe
 
 
 def match_name_list(results_dedupe, df):
+    """ Match name list per issue to LOC name list"""
     name_list_all = []
     name_list_highmatch = []
     fz = fuzzyset.FuzzySet()
     terms=df['name'].tolist()
-    #print(len(terms))
     #Create a list of terms we would like to match against in a fuzzy way
     for l in terms:
         fz.add(l)
-     
     #Now see if our sample term fuzzy matches any of those specified terms
     for name in results_dedupe:
         sample_term = name
@@ -127,17 +128,11 @@ def match_name_list(results_dedupe, df):
             max_match = max(matches, key=lambda x:x[0])
         else:
             max_match = None
-        #match_df = df[df['name'].str.match(matches)]
-        #print('-------------------')
-        #print(name, matches, max_match)
-        #print(name, matches)
         if max_match:
             match_df = df[df['name'].str.match(max_match[1])]
-            #print(match_df)
             if len(match_df)>=1:
                 match_df = return_likely_year_match_df(match_df)
                 #print(len(match_df))
-                #print(match_df)
                 name_list_all.append([name, match_df.iloc[0]['name heading'],match_df.iloc[0]['URI'],max_match[0]])
                 #select = [each for each in matches if each[0]>0.8]
                 #print(select)
@@ -146,12 +141,13 @@ def match_name_list(results_dedupe, df):
                     name_list_highmatch.append([name, match_df.iloc[0]['name heading'],match_df.iloc[0]['URI'],max_match[0]])
             else:
                 name_list_all.append([name,'','',''])
-                #name_list_highmatch.append([name,'','',''])
         else:
             name_list_all.append([name,'','',''])
     return name_list_all, name_list_highmatch
 
+
 def save_name_list_csv(name_list_all, name_list_highmatch, file_name):
+    """ Save name to csv file with similarity score"""
     df_1 = pd.DataFrame(name_list_all,columns=['raw entity','name match','URL','similar score'])
     df_1.to_csv('./output/name/'+ file_name + '_name_all.csv', index=False)
     df_2 = pd.DataFrame(name_list_highmatch,columns=['raw entity','name match','URL','similar score'])
@@ -159,23 +155,22 @@ def save_name_list_csv(name_list_all, name_list_highmatch, file_name):
     
 
 def extract_name_all(issues_path, name_file, model_path, embedding_file):
+    """ For all issues extract names"""
     tf.reset_default_graph()
     out_folder = './output/name/'
     if not os.path.isdir(out_folder):
         os.makedirs(out_folder)
-    #name_file = '../data/topic_entity/anti-slavery_names-for-tolstoy.csv'
     df = clean_process_name_file(name_file)
     run_ner(issues_path, model_path, embedding_file)
     ann_files, ann_file_names = collect_ann_files()
-    
     for i, file_name in enumerate(ann_file_names):
         results_dedupe = get_name_list_per_issue(ann_files[i])
         name_list_all, name_list_highmatch = match_name_list(results_dedupe, df)
         save_name_list_csv(name_list_all, name_list_highmatch, file_name)
  
 
-
 def find_entity_spacy(data_path):
+    """Baseline model, use spacy for NER"""
     with open(data_path) as f:
         data = " ".join(line.strip() for line in f)
     #nlp = spacy.load("en_core_web_sm")
