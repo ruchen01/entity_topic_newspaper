@@ -1,4 +1,15 @@
 # To install these Python dependencies, please type:
 # pip install -r requirements.txt
-
-streamlit
+spacy
+nltk
+tensorflow
+boto3
+Pillow
+pytesseract
+bert-serving-server
+bert-serving-client
+pytorch-pretrained-bert
+pyneuroner[cpu]
+fuzzyset
+fuzzywuzzy
+pandas
