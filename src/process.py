@@ -1,37 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Jul  5 14:25:41 2019
-
-@author: Ru
-"""
-#import pytesseract
 from PIL import Image
 import nltk
 import re
 import pytesseract
-
-class Newspapers(object):
-    """Load multiple newspaper images and write out text files
-    The text files are got by OCR 
-    """
-    def __init__(self):
-        #self.image = None
-        self.texts = []
-            
-    def open_img(self, file_name):
-        self.image = Image.open(file_name)
-        return self.image
-        
-    def img_to_text(self, location_type='local'):
-        
-            
-    
-        self.text = pytesseract.image_to_string(self.image)
-        return self.text
-        
-    def test(self):
-        print('newspaper test test')
 
 
 class Newspaper(object):
@@ -47,31 +17,25 @@ class Newspaper(object):
         self.name = None
             
     def open_img(self, img_file):
-        """ 
-        """
+        """ load image """
         self.image = Image.open(img_file)
         return self.image
         
     def img_to_text(self):
-        """
-        """
+        """Use Tesseract to OCR image"""
         self.text = pytesseract.image_to_string(self.image)
         return self.text
     
     def save_text(self,text_file):
+        """save text"""
         with open(text_file, 'w') as f:
             f.write(self.text)
         
-    def tex_to_articles(self):
-        """
-        """
-        print('newspaper test test')
-        
     def load_text(self, text_file):
+        """load text"""
         with open(text_file) as f:
             self.text = f.readlines()        
-        return self.text
-        
+        return self.text   
         
     def issue2articles(self):
         """Break each issue into articles based on the style of titles
@@ -136,21 +100,3 @@ class Newspaper(object):
 
 
 
-    
-    #return img_dir
-        
-#imgs_to_texts_save_local()
-    
-#text_file = '/Users/Ru/Documents/python/DL_projs/insight_AI/test_2/output_short/13_01_000006.txt'
-#x = Newspaper()
-#x.load_text(text_file)
-#article_list = x.issue2articles()
-##print(article_list)
-#issue_sentence, issue_article_sentence=x.articles2sentences(article_list)
-#divide_list = x.find_divide_article_line_number(issue_article_sentence)
-
-#print(x.texts)
-#print(x.images)
-#x.ocr_img()
-#x.load_img_from_local_dir()
-#print(x.texts)

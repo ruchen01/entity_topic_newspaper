@@ -4,6 +4,7 @@ import sys
 from src.pipeline import test_pipeline
 from src.pipeline import major_pipeline
 
+
 def parse_arguments(arguments = None):
     """Parse the entity_topic_newspaper arguments"""
     parser = argparse.ArgumentParser()
@@ -37,6 +38,7 @@ def parse_arguments(arguments = None):
     arguments = vars(arguments)
     return {k:v for k, v in arguments.items() if v is not None}
 
+
 def main(argv=sys.argv):
     """entity_topic_newspaper main method"""
     arguments = parse_arguments(argv[1:])
@@ -54,6 +56,7 @@ def main(argv=sys.argv):
     else:
         print('Run test.')
         test_pipeline(output_text_dir)
+
 
 if __name__ == "__main__":
     main()
