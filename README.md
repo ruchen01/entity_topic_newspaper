@@ -21,15 +21,17 @@ pip install -r requirements.txt
 ```
 
 Download a pre-trained BERT model, the example download provided below is BERT-Base, Uncased. 
-Download SpaCy English and GloVe vectors (vector size 300):
+Install Tesseract package, download SpaCy English and GloVe vectors (vector size 300):
 ```
 cd model
 curl -LO https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip
 unzip uncased_L-12_H-768_A-12.zip
 curl -LO http://nlp.stanford.edu/data/glove.6B.zip
 unzip glove.6B.zip
-python -m spacy download en
 cd ..
+python -m spacy download en
+sudo apt install tesseract-ocr
+sudo apt install libtesseract-dev
 ```
 
 Two example images are already included at data/img folder, so you can start test run immediately.
