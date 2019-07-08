@@ -1,126 +1,96 @@
-# Insight_Project_Framework
-Framework for machine learning projects at Insight Data Science.
+# LibraryBot - Topic and Entity Extraction for Historic Newspapers
+<img src="assets/header.png" >
 
-## Motivation for this project format:
-- **Insight_Project_Framework** : Put all source code for production within structured directory
-- **tests** : Put all source code for testing in an easy to find location
-- **configs** : Enable modification of all preset variables within single directory (consisting of one or many config files for separate tasks)
-- **data** : Include example a small amount of data in the Github repository so tests can be run to validate installation
-- **build** : Include scripts that automate building of a standalone environment
-- **static** : Any images or content to include in the README or web framework if part of the pipeline
+This repository contains a barebones implementation of a topic and name entity extraction engine.
+The implementation is based on leveraging pre-trained models from BERT combining with TFIDF for topic modeling and 
+GloVe for name entity.
+
+It allows you to:
+- Get OCR'd text from an input scanned image of newspaper.
+- Extract relevant topics of newspaper and match them with Library of Congress subject listing. 
+- Extract important person's names of newspaper and match with against Library of Congress name listing.
+
 
 ## Setup
-Clone repository and update python path
+Clone the repository locally and create a virtual environment (conda example below):
 ```
-repo_name=Insight_Project_Framework # URL of your new repository
-username=mrubash1 # Username for your personal github account
-git clone https://github.com/$username/$repo_name
-cd $repo_name
-echo "export $repo_name=${PWD}" >> ~/.bash_profile
-echo "export PYTHONPATH=$repo_name/src:${PYTHONPATH}" >> ~/.bash_profile
-source ~/.bash_profile
-```
-Create new development branch and switch onto it
-```
-branch_name=dev-readme_requisites-20180905 # Name of development branch, of the form 'dev-feature_name-date_of_creation'}}
-git checkout -b $branch_name
+conda create -n librarybot python=3.6 -y
+source activate librarybot
+cd entity_topic_newspaper
+pip install -r requirements.txt
 ```
 
-## Initial Commit
-Lets start with a blank slate: remove `.git` and re initialize the repo
+Download a pre-trained BERT model, the example download provided below is BERT-Base, Uncased. 
+Download SpaCy English and GloVe vectors (vector size 300):
 ```
-cd $repo_name
-rm -rf .git   
-git init   
-git status
-```  
-You'll see a list of file, these are files that git doesn't recognize. At this point, feel free to change the directory names to match your project. i.e. change the parent directory Insight_Project_Framework and the project directory Insight_Project_Framework:
-Now commit these:
-```
-git add .
-git commit -m "Initial commit"
-git push origin $branch_name
+cd model
+curl -LO https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip
+unzip uncased_L-12_H-768_A-12.zip
+curl -LO http://nlp.stanford.edu/data/glove.6B.zip
+unzip glove.6B.zip
+python -m spacy download en
+cd ..
 ```
 
-## Requisites
+Two example images are already included at data/img folder, so you can start test run immediately.
 
-- List all packages and software needed to build the environment
-- This could include cloud command line tools (i.e. gsutil), package managers (i.e. conda), etc.
-
-#### Dependencies
-
-- [Streamlit](streamlit.io)
-
-#### Installation
-To install the package above, pleae run:
-```shell
-pip install -r requiremnts
+## Usage
+### Running the model with pipeline end to end
+Here is an example for running the pipeline end to end with default settings! 
+```
+python main.py 
 ```
 
-## Build Environment
-- Include instructions of how to launch scripts in the build subfolder
-- Build scripts can include shell scripts or python setup.py files
-- The purpose of these scripts is to build a standalone environment, for running the code in this repository
-- The environment can be for local use, or for use in a cloud environment
-- If using for a cloud environment, commands could include CLI tools from a cloud provider (i.e. gsutil from Google Cloud Platform)
+### Run test 
+After running the model, if you want to add additional new scanned images of newspaper:
 ```
-# Example
-
-# Step 1
-# Step 2
+python main.py --test
 ```
 
-## Configs
-- We recommond using either .yaml or .txt for your config files, not .json
-- **DO NOT STORE CREDENTIALS IN THE CONFIG DIRECTORY!!**
-- If credentials are needed, use environment variables or HashiCorp's [Vault](https://www.vaultproject.io/)
+### More configurations
+...
 
 
-## Test
-- Include instructions for how to run all tests after the software is installed
+## Creating a custom dataset
+Data must be of the format below if you would like to import your own:
 ```
-# Example
-
-# Step 1
-# Step 2
+data/
+|
+|--- img/
+|      |-------image_0
+|      |-------image_1
+|      ...
+|
+|      |-------image_n
+|--- topic_entity/
+|      |-------topic_list.csv
+|      |-------entity_list.csv
 ```
+Each class name should be one word in the english language, or multiple words separated by '_'.
 
-## Run Inference
-- Include instructions on how to run inference
-- i.e. image classification on a single image for a CNN deep learning project
+## Output structure
+The revelant output directory are topic, name and text, where topic folder contains the relevant topic list per issue and 
+name gives the important person's name list per issue. The text folder contains the OCR'd texts from images and can be reused for other purposes.
+
 ```
-# Example
-
-# Step 1
-# Step 2
-```
-
-## Build Model
-- Include instructions of how to build the model
-- This can be done either locally or on the cloud
-```
-# Example
-
-# Step 1
-# Step 2
-```
-
-## Serve Model
-- Include instructions of how to set up a REST or RPC endpoint
-- This is for running remote inference via a custom model
-```
-# Example
-
-# Step 1
-# Step 2
-```
-
-## Analysis
-- Include some form of EDA (exploratory data analysis)
-- And/or include benchmarking of the model and results
-```
-# Example
-
-# Step 1
-# Step 2
+output/
+|
+|--- topic/
+|      |-------issue_1.txt
+|      |-------issue_2.txt
+|      ... 
+|
+|      |-------issue_n.txt
+|--- name/
+|      |-------issue_1.csv
+|      |-------issue_2.csv
+|      ...
+|      |-------issue_n.csv
+|----text/
+|      |-------issue_1.txt
+|      |-------issue_2.txt
+|      ...
+|
+|      |-------issue_n.txt
+|----ner/
 ```
