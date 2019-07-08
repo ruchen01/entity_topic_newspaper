@@ -2,6 +2,7 @@ from PIL import Image
 import nltk
 import re
 import pytesseract
+nltk.download('punkt')
 
 
 class Newspaper(object):
