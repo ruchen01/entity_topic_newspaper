@@ -8,7 +8,7 @@ from src.process import Newspaper
 def imgs_to_texts_save_local(img_dir='./data/img', output_dir ='./output/text'):
     """ Save all OCR'd text to local directory    """
     img_files = glob.glob(img_dir + '/*')
-    print(len(img_filesi), 'images to be OCR')
+    print(len(img_files), "images to be OCR'd")
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     for file in img_files:
