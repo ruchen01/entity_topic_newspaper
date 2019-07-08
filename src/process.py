@@ -28,7 +28,7 @@ class Newspaper(object):
     
     def save_text(self,text_file):
         """save text"""
-        with open(text_file, 'w') as f:
+        with open(text_file, 'w', encoding='utf8') as f:
             f.write(self.text)
         
     def load_text(self, text_file):
