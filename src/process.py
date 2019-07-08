@@ -33,7 +33,7 @@ class Newspaper(object):
         
     def load_text(self, text_file):
         """load text"""
-        with open(text_file) as f:
+        with open(text_file, encoding='utf8') as f:
             self.text = f.readlines()        
         return self.text   
         

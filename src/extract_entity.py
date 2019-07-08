@@ -98,7 +98,7 @@ def collect_ann_files():
 
 def get_name_list_per_issue(ann_file):
     """ Remove depulicate names in the name lists per issue"""
-    with open(ann_file) as f:
+    with open(ann_file, encoding='utf8') as f:
         data = f.read().splitlines()
     new_data = []
     for line in data:
