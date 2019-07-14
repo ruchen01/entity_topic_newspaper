@@ -12,7 +12,7 @@ It allows you to:
 - Extract relevant topics of newspaper and match them with Library of Congress subject listing. 
 - Extract important person's names of newspaper and match them with Library of Congress name listing.
 
-BERT is a masked language model developed by [Google](https://github.com/google-research/bert). It contains two steps in the framework: pre-training and fine-tuning. During the pre-training, the model is trained on unlabeled BooksCorpus and English Wikipedia text. For fine-tuning, the BERT model is initialized with the pre-trained parameters with them fine-tuned for the downstream tasks. In the [paper](https://arxiv.org/abs/1810.04805), it is shown that the feature-based approach with BERT, where fixed features are extracted from the pre-trained model, is only slightly behind fine-tuning the entire model. One can then perform sentence encoding using [BERT](https://github.com/hanxiao/bert-as-service) , which goal is to represent a variable length sentence into a fixed length vector, e.g. `hello world` to `[0.1, 0.3, 0.9]`.   
+
 
 ## Setup
 Clone the repository locally and create a virtual environment (conda example below):
@@ -37,10 +37,10 @@ sudo apt install tesseract-ocr
 sudo apt install libtesseract-dev
 ```
 
-Two example images are already included at data/img folder, so you can start test run immediately.
 
 ## Usage
 ### Running the model with pipeline end to end
+Two example images are already included at data/img folder, so you can start running immediately.
 Here is an example for running the pipeline end to end with default settings! 
 ```
 python main.py 
@@ -99,3 +99,6 @@ output/
 |      |-------issue_n.txt
 |----ner/
 ```
+
+## Methods and References
+BERT is a masked language model developed by [Google](https://github.com/google-research/bert). It contains two steps in the framework: pre-training and fine-tuning. During the pre-training, the model is trained on unlabeled BooksCorpus and English Wikipedia text. For fine-tuning, the BERT model is initialized with the pre-trained parameters with them fine-tuned for the downstream tasks. In the [paper](https://arxiv.org/abs/1810.04805), it is shown that the feature-based approach with BERT, where fixed features are extracted from the pre-trained model, is only slightly behind fine-tuning the entire model. One can then perform [sentence encoding](https://github.com/hanxiao/bert-as-service) using BERT, which goal is to represent a variable length sentence into a fixed length vector, e.g. `hello world` to `[0.1, 0.3, 0.9]`.   
