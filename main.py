@@ -24,7 +24,7 @@ def parse_arguments(arguments = None):
                         help='', default = './model/glove.6B.100d.txt')
     parser.add_argument('--output_dir', type=str, dest='output_dir',
                         help='', default = './output')
-    parser.add_argument('--test', type=int, dest='test',
+    parser.add_argument('--test', type=bool, dest='test',
                         help='', default = False)
     parser.add_argument('--gpu', type=bool, dest='cpu',
                         help='', default = False)
@@ -55,7 +55,7 @@ def main(argv=sys.argv):
                        embedding_file)
     else:
         print('Run test.')
-        test_pipeline(output_text_dir)
+        test_pipeline(img_dir, output_text_dir, model_bert_dir, topic_file, name_file, model_conll_dir, embedding_file)
 
 
 if __name__ == "__main__":

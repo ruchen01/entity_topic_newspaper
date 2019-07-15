@@ -191,3 +191,43 @@ def expand_stopwords():
         bert_stop.append('##'+letter)
     stop_words=list(set(nltk_stopwords+symbol_list+my_stopwords+bert_stop))
     return stop_words
+
+
+def get_topics_one_issue_test(vec,topic_embedding,topics, divide_list_issue,
+                         issue_num, n_topics):
+    """Compare the cosine similarity between articles per issue to topic embeddings"""
+    bert_vecs = vec[0]
+    bert_tokens = vec[1]
+    tmp_sum = np.zeros((vec[0].shape[0], vec[0].shape[2]))
+    for num, toks in enumerate(bert_tokens):
+        for word_idx, tok in enumerate(toks):
+            #if tok in tfidf_biglist[issue_num]:
+                #weight = tfidf_biglist[issue_num][tok]
+            weight = 1
+            tmp_sum[num, :] += bert_vecs[num, word_idx]*weight
+    topics_issue = set()
+    topics_issue_list = []
+    for i in range (len(divide_list_issue)-1):
+        for j in range(len(topics)):
+            if i == 0:
+                article_vec = np.sum(tmp_sum[0:divide_list_issue[i]],axis =0)
+                sim = cosine_similarity(article_vec, topic_embedding[j,:])
+                if sim > 0.7:
+                    #topics_issue.add(topics[j])
+                    topics_issue_list.append([topics[j], sim])
+            else:
+                article_vec = np.sum(tmp_sum[divide_list_issue[i]:divide_list_issue[i+1]],axis =0)
+                sim = cosine_similarity(article_vec, topic_embedding[j,:])
+                if sim > 0.7:
+                    #topics_issue.add(topics[j])
+                    topics_issue_list.append([topics[j], sim])
+    sort_topic_sim = sorted(topics_issue_list, key=lambda x:x[1], reverse=True)
+    tmp = zip(*sort_topic_sim)
+    topics = list(tmp)[0]
+    if n_topics <= len(topics):
+        topics_issue = set(topics[:n_topics])
+    else:
+        topics_issue = set(topics)
+    topics_issue = list(topics_issue)
+    return topics_issue, sort_topic_sim
+
