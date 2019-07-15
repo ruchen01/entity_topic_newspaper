@@ -13,7 +13,6 @@ It allows you to:
 - Extract important person's names of newspaper and match them with Library of Congress name listing.
 
 
-
 ## Setup
 Clone the repository locally and create a virtual environment (conda example below):
 ```
@@ -53,11 +52,19 @@ python main.py --test
 ```
 
 ### More configurations
-...
+| Argument | Type | Default | Description |
+|--------------------|------|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `model_bert_dir` | str | './model/uncased_L-12_H-768_A-12'| folder path of the pre-trained BERT model. |
+| `img_path`| str |'./data/img'| folder path of the document images. |
+| `output_dir`| str | './output' | folder path of the outputs. |
+| `model_conll_dir`| str | './model/conll_2003_en' | pretrained model for CONLL dataset. |
+| `glove_file` | str | './model/glove.6B.300d.txt' | path to glove file |
+| `max_seq_len` | int | `25` | maximum length of sequence, longer sequence will be trimmed on the right side. |
+| `s3` | bool | False | If you plan to use images from S3 storage. |
 
 
 ## Creating a custom dataset
-Data must be of the format below if you would like to import your own:
+Below is the default structure of the data. 
 ```
 data/
 |
@@ -72,6 +79,8 @@ data/
 |      |-------entity_list.csv
 ```
 Each class name should be one word in the english language, or multiple words separated by '_'.
+
+If you would like to import your own and not in this structure, please take a look at the More configurations section.
 
 ## Output structure
 The revelant output directory are topic, name and text, where topic folder contains the relevant topic list per issue and 
@@ -99,6 +108,8 @@ output/
 |      |-------issue_n.txt
 |----ner/
 ```
+If you would like to import your own and not in this structure, please take a look at the More configurations section.
+
 
 ## Methods and References
 BERT is a masked language model developed by [Google](https://github.com/google-research/bert). It contains two steps in the framework: pre-training and fine-tuning. During the pre-training, the model is trained on unlabeled BooksCorpus and English Wikipedia text. For fine-tuning, the BERT model is initialized with the pre-trained parameters with them fine-tuned for the downstream tasks. In the [paper](https://arxiv.org/abs/1810.04805), it is shown that the feature-based approach with BERT, where fixed features are extracted from the pre-trained model, is only slightly behind fine-tuning the entire model. One can then perform [sentence encoding](https://github.com/hanxiao/bert-as-service) using BERT, which goal is to represent a variable length sentence into a fixed length vector, e.g. `hello world` to `[0.1, 0.3, 0.9]`.   
