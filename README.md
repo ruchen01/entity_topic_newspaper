@@ -48,7 +48,7 @@ python main.py
 ### Run test 
 After running the model, if you want to add additional new scanned images of newspaper:
 ```
-python main.py --test
+python main.py --test True
 ```
 
 ### More configurations
